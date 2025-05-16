@@ -43,7 +43,7 @@ export function WebinarButton() {
             <DialogTitle className="sr-only">Create a Webinar</DialogTitle>
           </div>
         ) : (
-          <div className="">
+          <div className="flex">
             <DialogTitle className="sr-only">Create a Webinar</DialogTitle>
             <MultistepForm onComplete={handleComplete}
               steps={steps} />

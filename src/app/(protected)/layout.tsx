@@ -14,7 +14,7 @@ export default async function ProtectedLayout({ children }: IProtectedLayout) {
         <Sidebar />
 
         <div className='flex flex-col w-full h-screen overflow-auto px-4 scroll-hide container mx-auto'>
-          <Header user={currentUser}/>
+          <Header />
           {children}
 
         </div>

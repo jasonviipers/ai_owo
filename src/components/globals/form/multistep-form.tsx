@@ -3,8 +3,14 @@
 import { useWebinarStore } from "@/store/use-webinar-store"
 import { useState } from "react"
 import { motion, AnimatePresence } from 'framer-motion'
-import { AlertCircleIcon, CheckIcon } from "lucide-react"
+import { AlertCircleIcon, CheckIcon, ChevronRightIcon, LoaderCircleIcon } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
+import { createWebinar } from "@/server/actions/webinar"
+import { toast } from "sonner"
+import { error } from "console"
+import { useRouter } from "next/navigation"
 
 interface IMultistepForm {
   title: string
@@ -22,20 +28,53 @@ export function MultistepForm({ steps, onComplete }: IFormStepPops) {
   const [validationError, setValidationError] = useState<string | null>(null);
   const { formState, validateStep, isSubmitting, setIsSubmitting, setIsModalOpen } = useWebinarStore();
 
+  const router = useRouter();
   const currentStep = steps[currentStepIndex];
   const isFirstStep = currentStepIndex === 0;
   const isLastStep = currentStepIndex === steps.length - 1;
 
-  const handleNext = () => {
-    if (currentStepIndex < steps.length - 1) {
-      setCurrentStepIndex(currentStepIndex + 1);
+  const handleNext = async () => {
+    setValidationError(null)
+    const isValid = validateStep(currentStep.title as keyof typeof formState);
+    setCurrentStepIndex(currentStepIndex + 1);
+    if (!isValid) {
+      setValidationError('Please fill in all reqiuired fields')
+      return
     }
+
+    if (!completedSteps.includes(currentStep.title)) {
+      setCompletedSteps([...completedSteps, currentStep.title])
+    }
+
+    if (isLastStep) {
+      try {
+        setIsSubmitting(true)
+        const res = await createWebinar(formState)
+        if (res.status === 200 && res.webinarId) {
+          toast.success('Your webinar has been created successfull');
+          onComplete(res.webinarId);
+        } else {
+          toast.error(res.msg || 'Your webinar has not been created')
+          setValidationError(res.msg)
+        }
+        router.refresh()
+      } catch (error) {
+        console.error('Error creating webinar:', error)
+        toast.error('Failed to create webinar. Please try again')
+        setValidationError('Failed to create webinar. Please try again')
+      } finally {
+        setIsSubmitting(false)
+      }
+    }
+    setCurrentStepIndex(currentStepIndex + 1);
   };
 
   const handlePrevious = () => {
-    if (currentStepIndex > 0) {
-      setCurrentStepIndex(currentStepIndex - 1);
+    if (isFirstStep) {
+      setIsModalOpen(false)
     }
+    setCurrentStepIndex(currentStepIndex - 1);
+    setValidationError(null)
   }
 
   return (
@@ -136,6 +175,20 @@ export function MultistepForm({ steps, onComplete }: IFormStepPops) {
           </AnimatePresence>
         </div>
       </div >
+      <div className="w-full p-6 flex justify-between">
+        <Button variant='outline' onClick={handlePrevious} disabled={isSubmitting}
+          className={cn('border-gray-700 text-white hover:bg-gray-800', isFirstStep && 'opacity-50 cursor-not-allowed')}
+        >{isFirstStep ? 'Cancel' : 'Back'}</Button>
+        <Button disabled={isSubmitting} onClick={handleNext}>
+          {isLastStep ? isSubmitting ? (
+            <div>
+              <LoaderCircleIcon className="animate-spin" />
+              Creating...
+            </div>
+          ) : ("Complete") : ("Next")}
+          {!isLastStep && <ChevronRightIcon className="ml-1 h-4 w-4" />}
+        </Button>
+      </div>
     </div >
   )
 }

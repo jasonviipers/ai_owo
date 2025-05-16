@@ -17,7 +17,7 @@ interface IHeaderProps {
         image?: string | null | undefined | undefined;
     } | undefined
 }
-export function Header({ user }: IHeaderProps) {
+export function Header() {
     const pathname = usePathname();
     const router = useRouter();
     return (
