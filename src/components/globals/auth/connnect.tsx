@@ -2,7 +2,6 @@
 
 import { Button } from "@/components/ui/button"
 import { motion } from "framer-motion"
-import { useRouter } from "next/navigation"
 import { useState, useTransition } from "react"
 import { signIn } from "@/lib/auth-client"
 import { toast } from "sonner"
@@ -24,7 +23,6 @@ export const providers = [
 type ProviderType = (typeof providers)[number]['provider'];
 
 export function Connect() {
-  const router = useRouter()
   const [error, setError] = useState("")
   const [isPending, startTransition] = useTransition()
   const [activeProvider, setActiveProvider] = useState<string | null>(null)
@@ -41,7 +39,7 @@ export function Connect() {
           try {
             await signIn.social({
               provider: provider.provider,
-              callbackURL: '/dashboard',
+              callbackURL: '/home',
             });
            
           } catch (error) {

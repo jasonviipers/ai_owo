@@ -32,7 +32,7 @@ export const auth = betterAuth({
 			enabled: true,
 			maxAge: 5 * 60 // 5 minutes
 		},
-		expiresIn: 60 * 60 * 24 * 7, // 7 days
+		expiresIn: 60 * 60 * 24,// 24h
 		updateAge: 60 * 30, // Refresh every 30 minutes
 		freshAge: 60 * 5, // Refresh every 5 minutes
 	},
@@ -42,9 +42,31 @@ export const auth = betterAuth({
 			return cookieStore.getAll();
 		},
 	},
+	advanced: {
+		cookies: {
+			session_token: {
+				name: 'session_token',
+				attributes: {
+					httpOnly: true,
+					secure: process.env.NODE_ENV === 'production',
+				}
+			},
+		},
+		defaultCookieAttributes: {
+			httpOnly: true,
+			secure: process.env.NODE_ENV === 'production',
+		},
+		cookiePrefix: 'betterauth_',
+		ipAddress:{
+			ipAddressHeaders: ["x-client-ip", "x-forwarded-for"],
+			disableIpTracking: false,
+		}
+	},
+	baseURL: process.env.BETTER_AUTH_URL ?? '',
+	secret: process.env.BETTER_AUTH_SECRET ?? '',
 	rateLimit: {
-		windowMs: 15 * 60 * 1000, // 15 minutes
-		max: 100, // 10 requests per day
+		window: 10,// 10s
+		max: 100, // 100 requests per 10s
 		customRules: {
 			'/api/auth/callback/github': {
 				max: 5, // 5 requests per minute

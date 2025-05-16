@@ -29,7 +29,7 @@ export const webinarStatusEnum = pgEnum('WebinarStatusEnum', [
 
 export const callStatusEnum = pgEnum('CallStatusEnum', [
 	'PENDING',
-	'InProgress',
+	'IN_PROGRESS',
 	'COMPLETED',
 ]);
 export const user = pgTable("user", {
@@ -45,10 +45,10 @@ export const user = pgTable("user", {
 	banReason: text('ban_reason'),
 	banExpires: timestamp('ban_expires'),
 	stripeConnectId: text('stripe_connect_id'),
-	subscription:boolean('subscription'),
+	subscription: boolean('subscription').notNull().default(false),
 	stripeCustomerId: text('stripe_customer_id'),
 });
-
+export type User = typeof user.$inferSelect;
 export const session = pgTable("session", {
 	id: text('id').primaryKey(),
 	expiresAt: timestamp('expires_at').notNull(),
@@ -90,12 +90,22 @@ export const attendees = pgTable('attendees', {
 	id: text('id').$defaultFn(createId).primaryKey(),
 	email: text('email').unique().notNull(),
 	name: text('name').notNull(),
-	callStatus: callStatusEnum('callStatus').default('PENDING').notNull(),
+	callStatus: callStatusEnum('call_status').notNull().default('PENDING'),
 	// webinarId: text('webinar_id').notNull().references(() => webinar.id, { onDelete: 'cascade' }),
 	// userId: text('user_id').references(() => user.id, { onDelete: 'cascade' }),
 	createdAt: timestamp('created_at').notNull(),
 	updatedAt: timestamp('updated_at').notNull(),
 });
+
+export const insertAttendees = createInsertSchema(attendees)
+	.omit({ id: true, createdAt: true, updatedAt: true })
+	.extend({
+		email: z.string().email(),
+		name: z.string(),
+		callStatus: z.enum(['PENDING', 'IN_PROGRESS', 'COMPLETED']),
+	});
+export type InsertAttendees = z.infer<typeof insertAttendees>;
+export type Attendees = typeof attendees.$inferSelect;
 
 export const webinars = pgTable('webinars', {
 	id: text('id').$defaultFn(createId).primaryKey(),
@@ -125,17 +135,57 @@ export const webinars = pgTable('webinars', {
 	attendeeId: uuid('attendeeId'),
 	userId: text('userId').references(() => user.id, { onDelete: 'cascade' }),
 });
+export const insertWebinars = createInsertSchema(webinars)
+	.omit({ id: true, createdAt: true, updatedAt: true })
+	.extend({
+		title: z.string(),
+		description: z.string().optional(),
+		startTime: z.date().min(new Date()),
+		endTime: z.date().optional(),
+		duration: z.number().min(0),
+		webinarStatus: z.enum(['SCHEDULED', 'WAITING_ROOM', 'LIVE', 'ENDED', 'CANCELLED']),
+		presenterId: z.string().min(1),
+		tags: z.string().array().optional(),
+		ctaLabel: z.string().optional(),
+		ctaType: z.enum(['BUY_NOW', 'BOOK_A_CALL']),
+		ctaUrl: z.string().optional(),
+		couponCode: z.string().optional(),
+		couponEnabled: z.boolean().default(false),
+		couponExpiry: z.date().optional(),
+		lockChat: z.boolean().default(false),
+		stripeProductId: z.string().optional(),
+		aiAgentId: z.string().optional(),
+		priceId: z.string().optional(),
+		recordingUrl: z.string().optional(),
+		thumbnail: z.string().optional(),
+		userId: z.string().min(1),
+		attendeeId: z.string().optional(),
+	});
+export type InsertWebinars = z.infer<typeof insertWebinars>;
+export type Webinars = typeof webinars.$inferSelect;
 export const attendances = pgTable('attendances', {
 	id: text('id').$defaultFn(createId).primaryKey(),
 	webinarId: text('webinarId').references(() => webinars.id, { onDelete: 'cascade' }),
 	attendeeId: text('attendeeId').references(() => attendees.id, { onDelete: 'cascade' }),
-	attendedType: attendedTypeEnum('attendedType').notNull(),	
+	attendedType: attendedTypeEnum('attendedType').notNull(),
 	joinedAt: timestamp('joinedAt').defaultNow().notNull(),
 	leftAt: timestamp('leftAt'),
 	createdAt: timestamp('createdAt').defaultNow().notNull(),
 	updatedAt: timestamp('updatedAt').defaultNow().notNull(),
 	deletedAt: timestamp('deletedAt'),
 })
+export const insertAttendances = createInsertSchema(attendances)
+	.omit({ id: true, createdAt: true, updatedAt: true })
+	.extend({
+		webinarId: z.string().min(1),
+		attendeeId: z.string().min(1),
+		attendedType: z.enum(['REGISTERED', 'ATTENDED', 'ADDED_TO_CART', 'FOLLOW_UP', 'BREAKOUT_ROOM', 'CONVERTED']),
+		joinedAt: z.date().default(new Date()),
+		leftAt: z.date().optional(),
+		// userId: z.string().min(1),
+	});
+export type InsertAttendances = z.infer<typeof insertAttendances>;
+export type Attendances = typeof attendances.$inferSelect;
 // Relations
 export const usersRelations = relations(user, ({ many }) => ({
 

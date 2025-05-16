@@ -1,8 +1,21 @@
 "use client"
 
 import { motion } from "framer-motion"
+import { useEffect, useState } from "react"
 
 export function LoadingAnimation() {
+    // Add client-side only rendering to avoid hydration mismatch
+    const [isMounted, setIsMounted] = useState(false)
+    
+    useEffect(() => {
+        setIsMounted(true)
+    }, [])
+
+    // Return null during SSR to avoid hydration mismatch
+    if (!isMounted) {
+        return null
+    }
+
     return (
         <div className="fixed inset-0 bg-lukso-dark flex flex-col items-center justify-center z-50">
             <motion.div
@@ -13,7 +26,7 @@ export function LoadingAnimation() {
                 <div className="h-24 w-24 rounded-full bg-lukso-purple/20 flex items-center justify-center">
                     <div className="h-16 w-16 rounded-full bg-lukso-purple/40 flex items-center justify-center">
                         <div className="h-10 w-10 rounded-full bg-lukso-purple flex items-center justify-center">
-                            <span className="text-white font-bold text-xl">UP</span>
+                            <span className="text-white font-bold text-xl">OwO</span>
                         </div>
                     </div>
                 </div>
@@ -30,7 +43,7 @@ export function LoadingAnimation() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5, duration: 0.5 }}
                 className="mt-8 text-center">
-                <h2 className="text-xl font-bold text-white mb-2">UP Assistant AI</h2>
+                <h2 className="text-xl font-bold text-white mb-2">OwO Assistant</h2>
                 <p className="text-gray-400">Initializing your Universal Profile experience...</p>
             </motion.div>
 

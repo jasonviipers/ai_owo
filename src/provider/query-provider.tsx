@@ -3,7 +3,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { type ReactNode, useState } from 'react'
 import { ThemeProvider } from './theme-provider'
 import { Toaster } from '@/components/ui/sonner'
-import { IntegrationsProvider } from '@/hooks/useIntegrations'
 
 interface IQueryProviderProps {
     children: ReactNode
@@ -20,11 +19,9 @@ export function QueryProvider({ children }: IQueryProviderProps) {
         }
     }))
     return (
-        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <QueryClientProvider client={queryClientState}>
-                <IntegrationsProvider>
                     {children}
-                </IntegrationsProvider>
                 <Toaster />
             </QueryClientProvider>
         </ThemeProvider>
